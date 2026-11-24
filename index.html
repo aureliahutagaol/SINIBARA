@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SINIBARA · Sistem Informasi NIB, Pajak, dan Pertanahan Batu Bara</title>
+  <link rel="icon" href="images/logo.svg">
+  <!-- Leaflet: pustaka untuk peta interaktif -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ================= BAGIAN ATAS (HEADER) ================= -->
+  <header class="topbar">
+    <a href="#beranda" class="brand">
+      <img src="images/logo.svg" alt="Logo SINIBARA">
+      <div>
+        <strong>SINIBARA</strong>
+        <small>Sistem Informasi NIB, Pajak, dan Pertanahan Batu Bara</small>
+      </div>
+    </a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    <nav id="menu">
+      <a href="#beranda">Beranda</a>
+      <a href="#peta">Peta Interaktif</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#wilayah">Data Wilayah</a>
+      <a href="#cari">Pencarian</a>
+      <a href="#tentang">Tentang</a>
+      <button class="btn-login" id="btnLogin">Login Petugas</button>
+    </nav>
+  </header>
+
+  <div class="banner-contoh" id="bannerContoh">⚠️ Versi percobaan: semua data di web ini adalah <b>data contoh</b>, bukan data asli.</div>
+
+  <main>
+    <!-- ================= HALAMAN BERANDA ================= -->
+    <section id="hal-beranda" class="halaman">
+
+      <!-- Hero: judul besar + kotak cari cepat -->
+      <div class="hero">
+        <svg class="hero-pola" viewBox="0 0 600 300" preserveAspectRatio="none" aria-hidden="true">
+          <g fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2">
+            <path d="M0 60 L120 40 L240 70 L360 35 L480 65 L600 40"/>
+            <path d="M0 140 L120 120 L240 150 L360 115 L480 145 L600 120"/>
+            <path d="M0 220 L120 200 L240 230 L360 195 L480 225 L600 200"/>
+            <path d="M120 0 L120 300 M240 0 L240 300 M360 0 L360 300 M480 0 L480 300"/>
+          </g>
+          <path class="ombak" d="M0 270 Q75 250 150 270 T300 270 T450 270 T600 270 V300 H0Z" fill="rgba(43,163,201,.35)"/>
+        </svg>
+        <div class="hero-isi">
+          <span class="hero-tag">Kabupaten Batu Bara · Sumatera Utara</span>
+          <h1>Kenali setiap bidang tanah di <span id="kataGanti" class="kata-ganti">Lima Puluh</span></h1>
+          <p>SINIBARA menggabungkan data bidang tanah (NIB) dan pajak bumi dan bangunan (NOP)
+             dalam satu peta interaktif yang mudah dipakai.</p>
+          <form class="cari-cepat" id="formCariCepat">
+            <select id="jenisCepat"><option value="nib">NIB</option><option value="nop">NOP</option></select>
+            <input id="inputCepat" placeholder="Ketik NIB atau NOP lalu tekan Cari…" autocomplete="off">
+            <button class="btn utama">Cari</button>
+          </form>
+          <div class="hero-tombol">
+            <a href="#peta" class="btn terang">🗺️ Buka Peta</a>
+            <a href="#dashboard" class="btn terang">📊 Lihat Dashboard</a>
+          </div>
+        </div>
+        <img src="images/logo.svg" alt="" class="hero-logo">
+      </div>
+
+      <!-- Angka-angka yang berjalan (animasi) -->
+      <div class="kartu-statistik" id="statistik"></div>
+
+      <!-- Peta mini kecamatan + panel info -->
+      <div class="beranda-peta">
+        <div class="panel">
+          <h2>Jelajahi kecamatan</h2>
+          <p class="sub kecil">Arahkan kursor atau klik lingkaran di peta. Semakin besar lingkaran, semakin banyak bidangnya.</p>
+          <div id="petaBeranda"></div>
+        </div>
+        <div class="panel info-kecamatan" id="infoKecamatan"></div>
+      </div>
+
+      <!-- Fitur -->
+      <h2 class="judul-bagian">Apa yang bisa dilakukan di SINIBARA?</h2>
+      <div class="grid-fitur">
+        <a href="#peta" class="fitur"><span>🗺️</span><b>Peta interaktif</b><p>Lihat bidang tanah di atas peta jalan atau citra satelit, lengkap dengan NIB.</p></a>
+        <a href="#cari" class="fitur"><span>🔎</span><b>Cari NIB / NOP</b><p>Temukan bidang dengan cepat, saring per kecamatan dan desa.</p></a>
+        <a href="#dashboard" class="fitur"><span>📊</span><b>Dashboard grafik</b><p>Statistik jumlah bidang, luas, dan keterhubungan pajak per kecamatan.</p></a>
+        <a href="#cari" class="fitur"><span>🖨️</span><b>Cetak ke PDF</b><p>Cetak info bidang satu halaman, lengkap dengan peta mini dan QR code.</p></a>
+        <a href="#peta" class="fitur"><span>🏛️</span><b>Terhubung BHUMI</b><p>Buka lokasi bidang langsung di BHUMI ATR/BPN dan Google Maps.</p></a>
+        <a href="#wilayah" class="fitur"><span>🔒</span><b>Privasi terjaga</b><p>Nama pemegang hak dan NIK tidak pernah ditampilkan.</p></a>
+      </div>
+
+      <!-- Tahukah kamu? (berganti otomatis) -->
+      <div class="fakta" id="fakta">
+        <span class="fakta-ikon">💡</span>
+        <div class="fakta-isi"><b>Tahukah kamu?</b><p id="faktaTeks"></p></div>
+        <div class="fakta-titik" id="faktaTitik"></div>
+      </div>
+    </section>
+
+    <!-- ================= HALAMAN PETA ================= -->
+    <section id="hal-peta" class="halaman">
+      <div class="peta-alat">
+        <label>Warna bidang:
+          <select id="modeWarna">
+            <option value="nop">Status NOP (terhubung pajak)</option>
+            <option value="pajak">Status pajak</option>
+            <option value="hak">Jenis hak</option>
+            <option value="penggunaan">Penggunaan tanah</option>
+          </select>
+        </label>
+        <label>Kecamatan:
+          <select id="filterKecamatan"><option value="">Semua</option></select>
+        </label>
+        <button class="btn kecil" id="btnLokasi">📍 Lokasi saya</button>
+        <button class="btn kecil" id="btnAwal">⟲ Tampilan awal</button>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <!-- ================= HALAMAN DASHBOARD ================= -->
+    <section id="hal-dashboard" class="halaman">
+      <h1>Dashboard</h1>
+      <p class="sub">Ringkasan data bidang tanah dan pajak per kecamatan.</p>
+      <div class="kartu-statistik" id="statistikDashboard"></div>
+      <div class="grid-grafik">
+        <div class="panel lebar"><h2>Jumlah bidang per kecamatan</h2><div class="wadah-grafik tinggi"><canvas id="grafikJumlah"></canvas></div></div>
+        <div class="panel"><h2>Bidang terhubung NOP (%)</h2><div class="wadah-grafik"><canvas id="grafikPersen"></canvas></div></div>
+        <div class="panel"><h2>Luas per kecamatan (hektare)</h2><div class="wadah-grafik"><canvas id="grafikLuas"></canvas></div></div>
+        <div class="panel"><h2>Jenis hak</h2><div class="wadah-grafik"><canvas id="grafikHak"></canvas></div></div>
+        <div class="panel"><h2>Penggunaan tanah</h2><div class="wadah-grafik"><canvas id="grafikGuna"></canvas></div></div>
+      </div>
+      <div class="panel">
+        <h2>Tabel rekap per kecamatan</h2>
+        <div class="tabel-gulir"><table class="tabel" id="tabelRekap"></table></div>
+      </div>
+    </section>
+
+    <!-- ================= HALAMAN DATA WILAYAH ================= -->
+    <section id="hal-wilayah" class="halaman">
+      <h1>Data Wilayah</h1>
+      <p class="sub">Klik nama desa/kelurahan untuk melihatnya di peta.</p>
+      <div id="daftarWilayah" class="grid-wilayah"></div>
+    </section>
+
+    <!-- ================= HALAMAN PENCARIAN ================= -->
+    <section id="hal-cari" class="halaman">
+      <h1>Pencarian Bidang Tanah</h1>
+      <p class="sub">Cari berdasarkan NIB atau NOP, bisa juga disaring per kecamatan dan desa/kelurahan.</p>
+      <p class="info-privasi">🔒 Nama pemegang hak dan NIK tidak ditampilkan. Gunakan NIB atau NOP untuk mencari informasi bidang.</p>
+      <form id="formCari" class="form-cari">
+        <label>Jenis pencarian
+          <select id="jenisCari"><option value="nib">NIB</option><option value="nop">NOP</option></select>
+        </label>
+        <label class="lebar">Nomor yang dicari
+          <input id="inputCari" type="text" placeholder="Masukkan NIB…" autocomplete="off">
+        </label>
+        <label>Kecamatan
+          <select id="cariKecamatan"><option value="">Semua kecamatan</option></select>
+        </label>
+        <label>Kelurahan/Desa
+          <select id="cariDesa"><option value="">Semua desa/kelurahan</option></select>
+        </label>
+        <button class="btn utama" type="submit">Cari bidang</button>
+      </form>
+      <p class="contoh-cari">Coba contoh: <a href="#" id="contohNib"></a> · <a href="#" id="contohNop"></a></p>
+      <div id="hasilCari"></div>
+    </section>
+    <!-- ================= HALAMAN TENTANG ================= -->
+    <section id="hal-tentang" class="halaman">
+      <div class="tentang">
+        <div class="tentang-gambar">
+          <span>GEOSPASIAL</span>
+          <h2>Visualisasi Informasi Pertanahan</h2>
+        </div>
+        <div class="tentang-isi">
+          <span class="tentang-label">SEKILAS SINIBARA</span>
+          <h1>Informasi Spasial untuk Mendukung Akses Informasi</h1>
+          <p>SINIBARA merupakan prototipe WebGIS yang dirancang sebagai media visualisasi dan
+             eksplorasi informasi geospasial pertanahan berbasis web. Sistem ini menyajikan
+             informasi bidang tanah melalui peta interaktif, pencarian, dan dashboard.</p>
+          <ul class="tentang-daftar">
+            <li><b>Data:</b> saat ini memakai data contoh, bukan data asli.</li>
+            <li><b>Privasi:</b> nama pemegang hak dan NIK tidak pernah ditampilkan.</li>
+            <li><b>Teknologi:</b> Leaflet, Chart.js, dan Supabase.</li>
+            <li><b>Status:</b> prototipe, bukan layanan resmi Kementerian ATR/BPN.</li>
+          </ul>
+          <a href="https://bhumi.atrbpn.go.id/" target="_blank" rel="noopener" class="btn utama">Buka BHUMI ATR/BPN ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HALAMAN ADMIN / PETUGAS ================= -->
+    <section id="hal-admin" class="halaman">
+      <div class="admin">
+        <aside class="admin-menu">
+          <div class="admin-profil" id="adminProfil"></div>
+          <button data-tab="ringkasan" class="aktif">🏠 Ringkasan</button>
+          <button data-tab="tindak">⚠️ Perlu ditindaklanjuti <span class="hitung" id="hitungTindak"></span></button>
+          <button data-tab="kelola">🧩 Kelola data bidang</button>
+          <button data-tab="impor">📥 Impor &amp; ekspor</button>
+          <button data-tab="riwayat">🕘 Riwayat perubahan</button>
+          <button data-tab="akun" class="khusus-admin">👥 Kelola akun</button>
+          <button id="btnKeluar" class="keluar">↩ Keluar</button>
+        </aside>
+        <div class="admin-isi">
+          <div class="tab" id="tab-ringkasan"></div>
+          <div class="tab" id="tab-tindak"></div>
+          <div class="tab" id="tab-kelola">
+            <div class="admin-judul"><h1>Kelola data bidang</h1><button class="btn utama" id="btnTambahBidang">＋ Tambah bidang</button></div>
+            <div class="admin-saring">
+              <input id="saringTeks" placeholder="Cari NIB atau NOP…">
+              <select id="saringKec"><option value="">Semua kecamatan</option></select>
+              <select id="saringNop"><option value="">Semua status NOP</option><option value="ada">Sudah ada NOP</option><option value="tidak">Belum ada NOP</option></select>
+            </div>
+            <div class="tabel-gulir"><table class="tabel" id="tabelKelola"></table></div>
+            <div class="halaman-tabel" id="halamanTabel"></div>
+          </div>
+          <div class="tab" id="tab-impor"></div>
+          <div class="tab" id="tab-riwayat"></div>
+          <div class="tab" id="tab-akun"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 SINIBARA · Prototipe WebGIS, dikembangkan bersama tim SIPANTARA.
+    Bukan situs resmi Kementerian ATR/BPN.
+  </footer>
+
+  <!-- ================= LEMBAR CETAK PDF (hanya muncul saat dicetak) ================= -->
+  <div id="lembarCetak"></div>
+
+  <!-- ================= JENDELA LOGIN ================= -->
+  <div class="modal" id="modalLogin" hidden>
+    <form class="modal-isi" id="formLogin">
+      <img src="images/logo.svg" alt="" class="modal-logo">
+      <h2>Login Petugas</h2>
+      <p class="sub kecil">Khusus petugas Kantor Pertanahan Kabupaten Batu Bara.</p>
+      <input type="email" id="loginEmail" placeholder="Email petugas" required autocomplete="username">
+      <input type="password" id="loginSandi" placeholder="Kata sandi" required autocomplete="current-password">
+      <p class="pesan-salah" id="loginSalah" hidden>Email atau kata sandi salah.</p>
+      <div class="info-demo" id="infoDemo">
+        <b>Mode demo</b> (sebelum tersambung database). Coba akun:<br>
+        Admin: <code>admin@sinibara.demo</code><br>
+        Petugas: <code>petugas@sinibara.demo</code><br>
+        Kata sandi keduanya: <code>demo123</code>
+      </div>
+      <div class="modal-tombol">
+        <button type="button" class="btn" id="btnTutupLogin">Batal</button>
+        <button type="submit" class="btn utama">Masuk</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= JENDELA UBAH / TAMBAH BIDANG ================= -->
+  <div class="modal" id="modalBidang" hidden>
+    <form class="modal-isi lebar" id="formBidang">
+      <h2 id="judulFormBidang">Ubah data bidang</h2>
+      <div class="grid-form">
+        <label>NIB <input id="fNib" required pattern="[0-9]{14}" title="NIB harus 14 angka"></label>
+        <label>NOP <input id="fNop" placeholder="Kosongkan jika belum ada"></label>
+        <label>Kecamatan <select id="fKecamatan" required></select></label>
+        <label>Desa/Kelurahan <select id="fDesa" required></select></label>
+        <label>Jenis hak <select id="fHak"></select></label>
+        <label>Penggunaan <select id="fGuna"></select></label>
+        <label>Luas (m²) <input id="fLuas" type="number" min="1" required></label>
+        <label>Status pajak <select id="fPajak"><option>Lunas</option><option>Belum Lunas</option></select></label>
+      </div>
+      <p class="sub kecil" id="catatanKoordinat" hidden>📍 Bidang baru diberi titik sementara di tengah desa. Bentuk bidang asli nanti diambil dari file SHP.</p>
+      <div class="modal-tombol">
+        <button type="button" class="btn" id="btnBatalBidang">Batal</button>
+        <button type="submit" class="btn utama">Simpan</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Pustaka: peta (Leaflet), grafik (Chart.js), QR code -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <!-- SheetJS: membaca dan membuat file Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- shpjs: membaca file SHP (.zip) langsung di browser -->
+  <script src="https://unpkg.com/shpjs@6.2.0/dist/shp.js"></script>
+  <!-- Supabase: database dan login -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data-contoh.js"></script>
+  <script src="js/penyimpanan.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
